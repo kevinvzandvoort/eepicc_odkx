@@ -1,0 +1,136 @@
+<style>
+input#digaale_address_isurvey0 {
+    display: none;
+}
+.form-group {
+    margin-bottom: 0px;
+}
+.odk-base:nth-of-type(1) {
+    margin-bottom: 15px;
+}
+.odk-base:nth-of-type(1) .container {
+    padding-left: 0;
+}
+select#address1, select#address2 {
+    margin-right: 7px;
+}
+</style>
+<div id="container-{{promptId}}">
+	<form action="javascript:void(0);" onsubmit="odkLeaveField(this);">
+        <div class="form-group">
+            <div class="container">
+                <label for="picker-{{promptId}}">{{> labelHint}}</label>
+                <br />
+				<input id="digaale_address_{{promptId}}" type="string" name="{{name}}" value="{{value}}" tabindex="0"
+					   {{#eachProperty inputAttributes}} {{property}}="{{value}}" {{/eachProperty}} />
+            </div>
+        </div>
+    </form>
+	<select id="address1">
+		<option selected disabled>Sector</option>
+		<option value="ZA">ZA</option>
+		<option value="ZB">ZB</option>
+		<option value="ZC">ZC</option>
+		<option value="ZD">ZD</option>
+	</select>/
+	<select id="address2">
+		<option selected disabled>Block</option>
+		<option value="B1">B1</option>
+		<option value="B2">B2</option>
+		<option value="B3">B3</option>
+		<option value="B4">B4</option>
+		<option value="B5">B5</option>
+		<option value="B6">B6</option>
+		<option value="B7">B7</option>
+		<option value="B8">B8</option>
+		<option value="B9">B9</option>
+		<option value="B10">B10</option>
+		<option value="B11">B11</option>
+		<option value="B12">B12</option>
+		<option value="B13">B13</option>
+		<option value="NEW">NEW</option>
+	</select>-
+	<select id="address3">
+		<option selected disabled>House</option>
+		<option value="01">01</option>
+		<option value="02">02</option>
+		<option value="03">03</option>
+		<option value="04">04</option>
+		<option value="05">05</option>
+		<option value="06">06</option>
+		<option value="07">07</option>
+		<option value="08">08</option>
+		<option value="09">09</option>
+		<option value="10">10</option>
+		<option value="11">11</option>
+		<option value="12">12</option>
+		<option value="13">13</option>
+		<option value="14">14</option>
+		<option value="15">15</option>
+		<option value="16">16</option>
+		<option value="17">17</option>
+		<option value="18">18</option>
+		<option value="19">19</option>
+		<option value="20">20</option>
+		<option value="21">21</option>
+		<option value="22">22</option>
+		<option value="23">23</option>
+		<option value="24">24</option>
+		<option value="25">25</option>
+		<option value="26">26</option>
+		<option value="27">27</option>
+		<option value="28">28</option>
+		<option value="29">29</option>
+	</select>
+</div>
+
+<script>
+    var init_value = "{{value}}";
+	//console.log("init_value: '"+init_value+"'");
+	if(init_value != ""){
+		var init_val = init_value.match(/^[^\/]*/g)[0];
+		var address1 = document.querySelector('#address1');
+		var options = Array.from(address1.options);
+		var optionToSelect = options.find(item => item.text === init_val);
+		optionToSelect.selected = true;
+		
+		init_val = init_value.match(/^[^-]*/g)[0].match(/[^\/]*$/g)[0];
+		var address2 = document.querySelector('#address2');
+		options = Array.from(address2.options);
+		optionToSelect = options.find(item => item.text === init_val);
+		optionToSelect.selected = true;
+		
+		init_val = init_value.match(/[^-]*$/g)[0];
+		var address3 = document.querySelector('#address3');
+		options = Array.from(address3.options);
+		optionToSelect = options.find(item => item.text === init_val);
+		optionToSelect.selected = true;
+	}
+	
+	document.getElementById("address1").addEventListener('change', function () {
+        fillValue();
+    });
+	document.getElementById("address2").addEventListener('change', function () {
+        fillValue();
+    });
+	document.getElementById("address3").addEventListener('change', function () {
+        fillValue();
+    });
+	
+	function fillValue(){
+		var address1 = document.getElementById("address1");
+		var value1 = address1.value;
+		
+		var address2 = document.getElementById("address2");
+		var value2 = address2.value;
+		
+		var address3 = document.getElementById("address3");
+		var value3 = address3.value;
+		
+		var full_address = "";
+		if(value1 != "Sector" && value2 != "Block" && value3 != "House"){
+			full_address = value1+"/"+value2+"-"+value3;
+		}
+		document.getElementById("digaale_address_{{promptId}}").value = full_address;
+	}
+</script>

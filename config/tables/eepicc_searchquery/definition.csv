@@ -1,0 +1,6 @@
+_element_key,_element_name,_element_type,_list_child_element_keys
+household_id,household_id,integer,[]
+interviewer_id,interviewer_id,integer,[]
+name,name,string,[]
+participant_id,participant_id,integer,[]
+phonenumber,phonenumber,integer,[]

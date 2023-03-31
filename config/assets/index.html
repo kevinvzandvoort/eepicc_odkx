@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" type="text/css" id="theme" href="libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
+        <script type="text/javascript" src="commonDefinitions.js"></script>
+        <script type="text/javascript" src="libs/jquery-3.6.0.js"></script>
+        <script
+            type="text/javascript"
+            src="libs/jquery-migrate-3.3.2.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/js/odkCommon.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/js/odkData.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/tables/js/odkTables.js"
+        ></script>
+		<script
+			type="text/javascript"
+			src="../../permanent/device.js"
+		></script>
+		<script type="text/javascript">
+            var TABLET_ID;
+			var survey_location;
+			
+			window.addEventListener('load', function () {
+				TABLET_ID = device.id;
+				survey_location = device.survey_location;
+			});
+			
+			var HOUSEHOLD_ID = -1;
+				
+			function recordsSuccess(result){
+				//some issue with getCount. An error happened when trying to collect the data, and new ID was 1019 in stead of 1002
+				//perhaps check all those WHERE some condition is true
+				//how did error happen? Filled survey, was waiting for geolocation, tried to put next to window, got strange screen look like contents but different styling
+				//maybe get maximum value for this TABLET_ID IF count > 1, rather than use count
+				let records = result.getCount();
+				
+				if(records == 0){
+					HOUSEHOLD_ID = 1;
+				} else {
+					for (var i = 0; i < records; i++) {
+						var row_household_id = result.getData(i, 'household_id') - 1000 * TABLET_ID;
+						if(row_household_id > HOUSEHOLD_ID){
+							HOUSEHOLD_ID = row_household_id;
+						}
+					}
+					HOUSEHOLD_ID = HOUSEHOLD_ID + 1;
+				}
+				
+				//HOUSEHOLD_ID = records + 1;
+				document.getElementById("errormessage").innerHTML = "New Household ID: "+(TABLET_ID * 1000 + HOUSEHOLD_ID);
+			}
+			
+			function recordsFailure(error){
+				document.getElementById("errormessage").innerHTML = "Error: "+error;
+			}
+			
+			// Displays homescreen
+            function display() {
+                /*    Screen new client option that launches new household list view */
+                var newHousehold = document.createElement("button");
+                newHousehold.setAttribute("id", "button1");
+                newHousehold.innerHTML = "Add new household";
+                newHousehold.onclick = function () {
+                    odkTables.addRowWithSurvey(
+                        null,
+                        "eepicc_household",
+                        (survey_location == "DIGAALE" ? "eepicc_household_digaale" : "eepicc_household_hargeisa" ),
+                        null,
+                        {"household_id": TABLET_ID * 1000 + HOUSEHOLD_ID,
+						 "interviewer_id": TABLET_ID,
+						 "location": survey_location} //add initial data
+                    );
+                };
+                document.getElementById("wrapper").appendChild(newHousehold);
+				
+				var searchButton = document.createElement("button");
+                searchButton.setAttribute("id", "button2");
+                searchButton.innerHTML = "Search record";
+                searchButton.onclick = function(){
+					window.location = "search.html";
+				};
+                document.getElementById("wrapper").appendChild(searchButton);
+            }
+        </script>
+    </head>
+	<style>
+	button {
+  width: 80%;
+  margin: 10px auto 10px auto;
+  padding: 4% 5%;
+  background-color: #0D5257;
+  border: 1px solid #003100;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+}
+
+.logo {
+    width: 90%;
+    margin: 0 auto;
+    display: block;
+}
+
+	</style>
+    <body>
+		<img src="img/partner_logos.png" class="logo" />
+        <center>
+			<h1>EEPICC Study</h1>
+			<div id="wrapper">
+			</div>
+			<div id="errormessage">
+			</div>
+		</center>
+		<script type="text/javascript">
+            //$(display);
+			window.addEventListener('load', function () {
+				console.log("LOADED");
+				odkData.query("eepicc_household", "interviewer_id="+TABLET_ID, null, null, null, null, null, null, null, true, recordsSuccess, recordsFailure);
+				display();
+			});
+        </script>
+    </body>
+</html>

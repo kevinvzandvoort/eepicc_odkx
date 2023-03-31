@@ -1,0 +1,721 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" type="text/css" id="theme" href="libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
+        <script type="text/javascript" src="commonDefinitions.js"></script>
+        <script type="text/javascript" src="libs/jquery-3.6.0.js"></script>
+        <script
+            type="text/javascript"
+            src="libs/jquery-migrate-3.3.2.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/js/odkCommon.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/js/odkData.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="../../system/tables/js/odkTables.js"
+        ></script>
+		<script
+			type="text/javascript"
+			src="../../permanent/device.js"
+		></script>
+		<script type="text/javascript">
+            var TABLET_ID;
+			var survey_location;
+			
+			window.addEventListener('load', function () {
+				TABLET_ID = device.id;
+				survey_location = device.survey_location;
+			});
+			
+			
+			var _searchData = new Object;
+			function cbSRSuccess(searchData) {
+				_searchData.households = searchData;
+			}
+
+			function cbSRSuccess2(searchData) {
+				_searchData.members = searchData;
+				cbSRSuccessFULL(_searchData);
+			}
+			
+			function cbSRSuccessFULL(searchData){
+				var households = [];
+				if(searchData.hasOwnProperty("households")){
+				if(searchData.households.hasOwnProperty("getCount")){
+					for(var i=0; i<searchData.households.getCount(); i++){
+					households.push(searchData.households.getData(i, "household_id"));					
+				}
+				}
+				}
+				if(searchData.members.hasOwnProperty("getCount")){
+				for(var i=0; i<searchData.members.getCount(); i++){
+					households.push(searchData.members.getData(i, "household_id"));					
+				}
+				}
+				
+				function onlyUnique(value, index, self) {
+					return self.indexOf(value) === index;
+				}
+				households = households.filter(onlyUnique);
+				console.log("HOUSEHOLDS");
+				console.log(households);
+				console.log("("+households.join(",")+")");
+				
+				//TMP
+				
+				var WHERE = [];
+				for(var z=0; z<households.length; z++){
+					WHERE.push("household_id = ?");
+				}
+				WHERE = WHERE.join(" OR ");
+				
+				//odkData.query('eepicc_household', "household_id = ?", "("+households.join(",")+")", 
+				//odkData.query('eepicc_household', "household_id = ?", [households[0]], 
+				odkData.query('eepicc_household', WHERE, households, 
+				null, null, null, null, null, null, true, cbSRSuccessFINAL, cbSRFailure);
+			}
+			
+			function cbSRSuccessFINAL(searchData){
+			
+				for(var i=0; i<searchData.getCount(); i++)(function(i){
+						var household = document.createElement("div");
+						household.classList.add("household");
+						
+						var household_title = document.createElement("h2");
+						household_title.innerHTML = "<span class = 'glyphicon glyphicon-home'></span> ID: " + searchData.getData(i, "household_id") + " (" + searchData.getData(i, "address") + ")";
+						household.appendChild(household_title);
+						
+						var household_level_forms = document.createElement("div");
+						household_level_forms.classList.add("household_forms");
+						household.appendChild(household_level_forms);
+						
+						var household_survey = document.createElement("a");
+						household_survey.classList.add("button");
+						household_survey.classList.add("householdsurvey");
+						household_survey.innerHTML = "Household survey";
+						household_survey.href="#";
+						household_survey.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household",
+								searchData.getRowId(i),
+								(survey_location == "DIGAALE" ? "eepicc_household_digaale" : "eepicc_household_hargeisa" ),
+								null
+							);
+						};
+						household_level_forms.appendChild(household_survey);
+						
+						if(survey_location == "DIGAALE"){
+							var vaccreg_survey = document.createElement("a");
+							vaccreg_survey.classList.add("button");
+							vaccreg_survey.classList.add("vaccine_registration");
+							vaccreg_survey.innerHTML = "Vaccine registration";
+							vaccreg_survey.href="#";
+							vaccreg_survey.onclick = function(){
+								odkTables.editRowWithSurvey(
+									null,
+									"eepicc_household",
+									searchData.getRowId(i),
+									"eepicc_household_digaale_vaccine_registration",
+									null
+								);
+							};
+							household_level_forms.appendChild(vaccreg_survey);
+							
+							var vaccination_survey = document.createElement("a");
+							vaccination_survey.classList.add("button");
+							vaccination_survey.classList.add("vaccination_survey");
+							vaccination_survey.innerHTML = "Vaccination";
+							vaccination_survey.href="#";
+							vaccination_survey.onclick = function(){
+								odkTables.editRowWithSurvey(
+									null,
+									"eepicc_household",
+									searchData.getRowId(i),
+									"eepicc_household_digaale_vaccination",
+									null
+								);
+							};
+							household_level_forms.appendChild(vaccination_survey);
+							
+							var household_ae7_survey = document.createElement("a");
+							household_ae7_survey.classList.add("button");
+							household_ae7_survey.classList.add("ae_survey");
+							household_ae7_survey.innerHTML = "Day 7 AE survey";
+							household_ae7_survey.href="#";
+							household_ae7_survey.onclick = function(){
+								odkTables.editRowWithSurvey(
+									null,
+									"eepicc_household",
+									searchData.getRowId(i),
+									"eepicc_household_digaale_ae7",
+									null
+								);
+							};
+							household_level_forms.appendChild(household_ae7_survey);
+						}
+						
+						var members = document.createElement("div");
+						members.classList.add("members");
+						
+						var members_title = document.createElement("h3");
+						members_title.classList.add("members_title");
+						members_title.innerHTML = "Household members";
+						members.appendChild(members_title);
+						
+						odkData.query('eepicc_household_members', "household_id = ?", [searchData.getData(i, "household_id")], 
+						null, null, null, null, null, null, true, function(mData){
+							if(mData.getCount() > 0){
+								for(var j=0; j<mData.getCount(); j++)(function(j){
+									var member = document.createElement("div");
+									member.classList.add("member");
+									
+									var member_title = document.createElement("h4");
+									member_title.classList.add("name");
+									member_title.innerHTML = "<span class = 'glyphicon glyphicon-user'></span> " + mData.getData(j, "name") + " ("+mData.getData(j, "age_years")+")";
+									member.appendChild(member_title);
+									
+									var member_level_forms = document.createElement("div");
+									member_level_forms.classList.add("member_forms");
+									member.appendChild(member_level_forms);
+									
+									var member_link = document.createElement("a");
+									member_link.classList.add("button");
+									member_link.classList.add("individual_survey");
+									member_link.innerHTML = "Swab survey";
+									member_link.href="#";
+									if(mData.getData(j, "participant_selected") == 1){
+										member_link.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								(survey_location == "DIGAALE" ? "eepicc_individual_survey_digaale" : "eepicc_individual_survey_hargeisa" ),
+								null
+							);
+						};
+						
+										if(mData.getData(j, "individual_consent") == "no"){
+											member_link.classList.add("no_consent");
+										} else if(mData.getData(j, "individual_consent") == "yes"){
+											member_link.classList.add("completed");
+										} else {
+											member_link.classList.add("not_started");
+										}
+						
+									} else {
+										member_link.classList.add("disabled");
+									}
+									
+						member_level_forms.appendChild(member_link);
+						
+						//var member_break = document.createElement("br");
+						//member_level_forms.appendChild(member_break);
+						
+						var member_link_vacc_reg = document.createElement("a");
+						member_link_vacc_reg.classList.add("button");
+						member_link_vacc_reg.classList.add("member_vaccine_registration");
+						member_link_vacc_reg.innerHTML = "Vaccine registration";
+						member_link_vacc_reg.href="#";
+						member_link_vacc_reg.classList.add("vaccination_registration");
+						if(mData.getData(j, "age_years") >= 5){
+							member_link_vacc_reg.classList.add("disabled");
+						} else {
+							member_link_vacc_reg.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								"eepicc_vaccine_registration",
+								null
+							);
+							};
+							
+							if(mData.getData(j, "vaccine_excluded") == 1){
+								member_link_vacc_reg.classList.add("excluded");
+							} else if(mData.getData(j, "vaccine_excluded") == 0){
+								if(mData.getData(j, "vaccine_consent") == "no"){
+									member_link_vacc_reg.classList.add("no_consent");
+									//console.log("mlv, no consent: " +mData.getData(j, "vaccine_consent"));
+								} else {
+									member_link_vacc_reg.classList.add("completed");
+									//console.log("mlv, completed: " +mData.getData(j, "vaccine_consent"));
+								}
+							} else {
+								member_link_vacc_reg.classList.add("not_started");
+								//console.log("mlv, not_started: " +mData.getData(j, "vaccine_consent"));
+							}
+							
+						}
+						member_level_forms.appendChild(member_link_vacc_reg);
+						
+						var member_link_vacc = document.createElement("a");
+						member_link_vacc.classList.add("button");
+						member_link_vacc.classList.add("vaccination_survey");
+						//var member_link = document.createElement("span");
+						member_link_vacc.innerHTML = "Vaccination (Dose 1)";
+						member_link_vacc.href="#";
+						member_link_vacc.classList.add("vaccination");
+						if(mData.getData(j, "vaccine_consent") != "yes"){
+							member_link_vacc.classList.add("disabled");
+							if(mData.getData(j, "vaccine_excluded") == 1){
+								//member_link_vacc.classList.add("excluded");
+							}
+							//console.log("vaccine enabled for j:"+j);
+						} else if(mData.getData(j, "vaccine_excluded") == 1){
+							//member_link_vacc.classList.add("excluded");
+							member_link_vacc.classList.add("disabled");
+						} else {
+							member_link_vacc.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								"eepicc_vaccination",
+								null
+							);
+							};
+							
+							if(mData.getData(j, "vacc_present") == "no"){
+								member_link_vacc.classList.add("not_completed");
+							} else if(mData.getData(j, "vaccine_administered") == "yes"){
+								member_link_vacc.classList.add("completed");
+							} else {
+								member_link_vacc.classList.add("not_started");
+							}
+						}					
+						member_level_forms.appendChild(member_link_vacc);
+						
+						var member_link_ae7 = document.createElement("a");
+						member_link_ae7.classList.add("button");
+						member_link_ae7.classList.add("ae_survey");
+						member_link_ae7.innerHTML = "Day 7 AE survey (Dose 1)";
+						member_link_ae7.href="#";
+						member_link_ae7.classList.add("vaccination");
+						if(mData.getData(j, "vaccine_administered") != "yes"){
+							member_link_ae7.classList.add("disabled");
+							//console.log("vaccine enabled for j:"+j);
+						} else {
+							member_link_ae7.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								"eepicc_vaccination_ae7",
+								null
+							);
+							};
+							
+							if(mData.getData(j, "vacc_ae7_present") == "no"){
+								member_link_ae7.classList.add("not_completed");
+							} else if(mData.getData(j, "vacc_ae7_present") == "yes"){
+								member_link_ae7.classList.add("completed");
+							} else {
+								member_link_ae7.classList.add("not_started");
+							}
+						}					
+						member_level_forms.appendChild(member_link_ae7);
+						
+						var member_link_vacc_dose2 = document.createElement("a");
+						member_link_vacc_dose2.classList.add("button");
+						member_link_vacc_dose2.classList.add("vaccination_survey");
+						//var member_link = document.createElement("span");
+						member_link_vacc_dose2.innerHTML = "Vaccination Dose 2";
+						member_link_vacc_dose2.href="#";
+						member_link_vacc_dose2.classList.add("vaccination");
+						if(mData.getData(j, "vaccine_consent") != "yes"){
+							member_link_vacc_dose2.classList.add("disabled");
+							if(mData.getData(j, "vaccine_excluded") == 1){
+								//member_link_vacc.classList.add("excluded");
+							}
+							//console.log("vaccine enabled for j:"+j);
+						} else if(mData.getData(j, "vaccine_excluded") == 1){
+							//member_link_vacc.classList.add("excluded");
+							member_link_vacc_dose2.classList.add("disabled");
+						} else if(mData.getData(j, "age_years") >= 1 || mData.getData(j, "vaccine_administered") != "yes"){
+							//member_link_vacc.classList.add("excluded");
+							member_link_vacc_dose2.classList.add("disabled");
+						} else {
+							member_link_vacc_dose2.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								"eepicc_vaccination_dose2",
+								null
+							);
+							};
+							
+							if(mData.getData(j, "vacc_present_d2") == "no"){
+								member_link_vacc_dose2.classList.add("not_completed");
+							} else if(mData.getData(j, "vaccine_administered_d2") == "yes"){
+								member_link_vacc_dose2.classList.add("completed");
+							} else {
+								member_link_vacc_dose2.classList.add("not_started");
+							}
+						}					
+						member_level_forms.appendChild(member_link_vacc_dose2);
+						
+						var member_link_ae7_dose2 = document.createElement("a");
+						member_link_ae7_dose2.classList.add("button");
+						member_link_ae7_dose2.classList.add("ae_survey");
+						member_link_ae7_dose2.innerHTML = "Day 7 AE survey Dose 2";
+						member_link_ae7_dose2.href="#";
+						member_link_ae7_dose2.classList.add("vaccination");
+						if(mData.getData(j, "vaccine_administered_d2") != "yes"){
+							member_link_ae7_dose2.classList.add("disabled");
+							//console.log("vaccine enabled for j:"+j);
+						} else {
+							member_link_ae7_dose2.onclick = function(){
+							odkTables.editRowWithSurvey(
+								null,
+								"eepicc_household_members",
+								mData.getRowId(j),
+								"eepicc_vaccination_dose2_ae7",
+								null
+							);
+							};
+							
+							if(mData.getData(j, "vacc_ae7_present_d2") == "no"){
+								member_link_ae7_dose2.classList.add("not_completed");
+							} else if(mData.getData(j, "vacc_ae7_present_d2") == "yes"){
+								member_link_ae7_dose2.classList.add("completed");
+							} else {
+								member_link_ae7_dose2.classList.add("not_started");
+							}
+						}					
+						member_level_forms.appendChild(member_link_ae7_dose2);
+						
+						members.appendChild(member);
+						household.appendChild(members);
+								})(j);
+							} else { console.log("NO MEMBERS");}
+						}, function(error){console.log("member_error:"+error)});
+						
+						document.getElementById("wrapper").appendChild(household);						
+					})(i);
+				
+			
+			
+				//_searchData = searchData;
+				if(searchData.getCount() > 0) {
+					
+					document.getElementById("errormessage").innerHTML = searchData.getCount()+" record(s) found.";
+					
+					//for(var i=0; i<searchData.getCount(); i++)(function(i){
+					//	var household = document.createElement("div");
+					//	household.class = "household";
+					//	var household_survey = document.createElement("button");
+					//	household_survey.class = "householdsurvey";
+					//	household_survey.innerHTML = "Household survey 2";
+					//	household_survey.onclick = function(){
+					//		odkTables.editRowWithSurvey(
+					//			null,
+					//			"eepicc_household",
+					//			searchData.getRowId(i),
+					//			(survey_location == "DIGAALE" ? "eepicc_household_digaale" : "eepicc_household_hargeisa" ),
+					//			null
+					//		);
+					//	};
+					//	var household_title = document.createElement("h2");
+					//	household_title.innerHTML = "ID: " + searchData.getData(i, "household_id") + "(" + searchData.getData(i, "address") + ")";
+					//	
+					//	document.getElementById("wrapper").appendChild(household);						
+					//})(i);
+					// open filtered list view if client found
+					/*var rowId = searchData.getRowId(0);
+					 odkTables.openTableToListView(null,
+						'femaleClients',
+						'_id = ?',
+						[rowId],
+						'config/tables/FemaleClients/html/femaleClients_list.html');*/
+						
+    } else {
+       document.getElementById("errormessage").innerHTML = "No records found.";
+    }
+}
+
+function cbSRFailure(error) {
+    console.log('cbSRFailure failed with error: ' + error);
+	//document.getElementById("errormessage").innerHTML = 'cbSRFailure failed with error: ' + error;
+}
+			
+			// filters list view by client id entered by user
+			function getResults() {
+			
+				document.getElementById("wrapper").innerHTML = "";
+			
+				var hid = document.getElementById('hid').value;
+				var haddress = document.getElementById('haddress').value;
+				var pid = document.getElementById('pid').value;
+				var phone = document.getElementById('phone').value;
+				var name = document.getElementById('name').value;
+
+				var WHERE_household = [];
+				var VALUES_household = [];
+				
+				var WHERE_member = [];
+				var VALUES_member = [];
+				
+				if(hid != ""){
+					WHERE_household.push("household_id = ?");
+					VALUES_household.push(hid);
+					
+					WHERE_member.push("household_id = ?");
+					VALUES_member.push(hid);
+				}
+				if(pid != ""){
+					WHERE_member.push("participant_id = ?");
+					VALUES_member.push(pid);
+				}
+				if(phone != ""){
+					WHERE_household.push("phonenumber LIKE ?");
+					VALUES_household.push("%"+phone+"%");
+				}
+				if(haddress != ""){
+					WHERE_household.push("address LIKE ?");
+					VALUES_household.push("%"+haddress+"%");
+				}
+				if(name != ""){
+					WHERE_member.push("name LIKE ?");
+					VALUES_member.push("%"+name+"%");
+				}
+				
+				WHERE_household = WHERE_household.join(" AND ");
+				WHERE_member = WHERE_member.join(" AND ");
+
+				if(WHERE_household.length > 0){
+				odkData.query('eepicc_household', WHERE_household, VALUES_household, 
+				null, null, null, null, null, null, true, cbSRSuccess, cbSRFailure);
+				}
+				
+				if(WHERE_member.length > 0){
+				console.log(WHERE_member.length);
+				odkData.query('eepicc_household_members', WHERE_member, VALUES_member, 
+				null, null, null, null, null, null, true, cbSRSuccess2, cbSRFailure);
+				}
+			}
+        </script>
+    </head>
+	<style>
+	form {
+    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-gap: 0.25em;
+}
+form label, form input {
+    font-size: 0.8em;
+}
+
+body {
+    margin: 0;
+}
+
+center#content {
+    margin: 8px;
+    padding: 0px 10px;
+}
+
+div#searchBox {
+    border-bottom: 1px solid #777;
+    padding-bottom: 5px;
+}
+
+div#errormessage {
+    text-align: left;
+    font-size: 0.8em;
+    font-style: italic;
+    margin-bottom: 5px;
+}
+
+.header {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    grid-gap: 1em;
+    background-color: #eeeeee;
+    padding: 1em;
+	align-items: center;
+    border-bottom: 1px solid #dddddd;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.1em;
+    text-align: left;
+}
+
+.backbutton {
+    background-color: #0D5257;
+    border-radius: 5px;
+    color: white;
+    padding: 5px;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+}
+
+.household {
+    padding: 2% 5% 2% 5%;
+    background-color: #efefef;
+    border: 1px solid #eeeeee;
+    box-shadow: #d7d7d7 3px 3px 5px;
+    margin-bottom: 21px;
+}
+
+.household h2 {
+    margin: 0;
+    text-align: left;
+    font-size: 1em;
+}
+
+.household_forms, .member_forms {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 7px 0px;
+	grid-gap: 1em;
+}
+
+h3.members_title, h4.name {
+    margin: 0;
+    text-align: left;
+    font-style: italic;
+    font-weight: normal;
+    font-size: 0.9em;
+}
+h3.members_title {
+	margin-bottom: 7px;
+}
+h4.name {
+	font-style: normal;
+	font-size: 0.8em;
+}
+.member {
+    padding-left: 0.5em;
+}
+.member_forms {
+    padding-left: 1em;
+	grid-gap: 0.5em;
+}
+
+.button {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 2% 0 2% 0;
+    border: 1px solid #afafaf;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+.household_forms .button {
+    background-color: #0D5257;
+    color: #FFFFFF;
+}
+/*
+.button.householdsurvey {
+    background: #00BF6F;
+}
+.button.individual_survey {
+    background: #00AEC7;
+}
+.button.vaccination_survey {
+    background: #FFB81C;
+}
+.button.vaccine_registration {
+	background: #1E22AA;
+}
+.button.member_vaccine_registration {
+	background: #621244;
+}
+.button.ae_survey {
+	background: #FFABBA;
+}
+*/
+.button.disabled {
+    background: #cbcbcb !important;
+	color: #979797 !important;
+}
+.button.not_started, .button.not_completed {
+    background: #FFB81C !important;
+	color: #FFFFFF !important;
+}
+.button.no_consent {
+    background: #000000 !important;
+	color: #FFFFFF !important;
+}
+.button.completed {
+    background: #00BF6F !important;
+	color: #FFFFFF !important;
+}
+.button.excluded {
+    background: #FE5000 !important;
+	color: #FFFFFF !important;
+}
+	</style>
+    <body>
+		<div class="header">
+			<a href="index.html" class="backbutton"><span class = 'glyphicon glyphicon-arrow-left'></span>  Back</a>
+			<h1>Search records</h1>
+		</div>
+        <center id="content">
+			<div id="searchBox">
+            <form id="form" action="javascript:getResults();">
+                  <label for="hid">Household ID</label>
+				  <input
+                    id="hid"
+                    type="text"
+                    name="query"
+                    placeholder="Enter Household ID..." />
+				<label for="haddress">Household Address</label>
+				<input
+                    id="haddress"
+                    type="text"
+                    name="query"
+					size="10"
+                    placeholder="Enter Household Address..." />
+				<label for="pid">Participant ID</label>
+				<input
+                    id="pid"
+                    type="text"
+                    name="query"
+                    size="10"
+                    placeholder="Enter Participant ID..." />
+				<label for="phone">Phone number</label>
+				<input
+                    id="phone"
+                    type="text"
+                    name="query"
+                    size="20"
+                    placeholder="Enter Phone number..." />
+				<label for="name">Name</label>
+				<input
+                    id="name"
+                    type="text"
+                    name="query"
+                    size="20"
+                    placeholder="Enter Name..." />
+				<br>
+                <input id="submit" type="submit" value="Search" />
+            </form>
+        </div>
+		<div id="errormessage">
+			</div>
+			<div id="wrapper">
+			</div>
+			
+		</center>
+		<script type="text/javascript">
+            //$(display);
+			//odkData.query("eepicc_household", "interviewer_id="+TABLET_ID, null, null, null, null, null, null, null, true, recordsSuccess, recordsFailure);
+			//display();
+			console.log("TEST console.log");
+        </script>
+    </body>
+</html>

@@ -1,0 +1,59 @@
+<div class="linkedTable layout-zebra rounded">
+    {{> labelHint}}
+   	
+    <table class="linked-table">
+        <thead>
+            <tr class="tableGrid">
+                {{#each columns}}
+                    <th> {{localizeText title}}</th>
+                {{/each}}
+            </tr>
+        </thead>
+        <tbody>
+            {{#each instances}}
+                <tr class="tableGrid person">
+                    <td class="tableGrid"><span>{{savepoint_timestamp}}</span></td>
+					<td class="tableGrid"><span class="glyphicon {{icon_class}}"></span></td>
+                    <td class="tableGrid"><span><a instance-id="{{instance_id}}" title="edit" class="openInstance btn btn-default">{{display_field}} ({{age_years}})</a></span></td>
+					icon_class
+                </tr>  
+            {{/each}}
+			<p id="errormsg"></p>
+        </tbody>
+    </table>
+</div>
+
+<script>
+var a = document.querySelectorAll("tr.tableGrid.person");
+var b = document.getElementById("errormsg");
+
+var N = a.length;
+if(N == 0){
+	console.log("No individuals selected");
+	b.innerHTML = "No individuals were selected.";
+} else {
+	console.log("Some individuals are selected");
+}
+
+console.log("N: " + N);
+/*if(N > 2){
+	var x = 0;
+	for(var i=0; i<N; i++){
+		a[i].style = "";
+	}
+	while(x < 2){
+		var x = 0;
+		for(var i=0; i<N; i++){
+			a[i].style = "";
+		}
+		for(var i=0; i<N; i++){
+		if(Math.random() > 2/N){
+			a[i].style = "display: none;"
+		} else {
+			x = x+1;
+		}
+	}
+	}
+}*/
+
+</script>
